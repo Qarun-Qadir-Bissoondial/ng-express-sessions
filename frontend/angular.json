@@ -127,5 +127,8 @@
       }
     }
   },
-  "defaultProject": "ng-express-sessions"
+  "defaultProject": "ng-express-sessions",
+  "cli": {
+    "analytics": false
+  }
 }
