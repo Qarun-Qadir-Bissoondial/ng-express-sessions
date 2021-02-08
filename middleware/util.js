@@ -1,4 +1,4 @@
-const { createFailure } = require('../responses');
+const { createErrResponse } = require('../responses');
 
 module.exports = {
     // check for the presence of all required keys in req.body
@@ -6,7 +6,7 @@ module.exports = {
     hasRequiredParams: (...params) => (req, res, next) => { 
         for (const param of params) {
             if (!(param in req.body)) {
-                return res.status(400).send(createFailure("Data missing"))
+                return createErrResponse(res, 400, 'Data missing');
             }
         }
 
