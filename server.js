@@ -1,42 +1,32 @@
 // IMPORTS ---------------------------------------------------------------
 
 const express = require('express');
-const expressSession = require('express-session');
 const { isLoggedIn } = require('./middleware/auth');
-const { hasRequiredParams } = require('./middleware/util');
 const { createSuccess, createErrResponse } = require('./responses');
-
-
-// CONSTANTS/ENV STUFF ---------------------------------------------------
-
-const HOUR_MS = 60 * 60 * 1000;
+const db = require('./db/init');
+const sessionConfig = require('./sessions/init')(db);
+const userRoutes = require('./routes/users')(express, db.models);
+console.log(db.models);
 
 
 // FUNCTIONS (TODO: SEPARATE LATER) --------------------------------------
 
-const userExists = (id, email) => users.find(u => u.id === id || u.email === email);
+// const userExists = (id, email) => users.find(u => u.id === id || u.email === email);
 
 
-// SETUP -----------------------------------------------------------------
+// ATTACH MIDDLEWARE -----------------------------------------------------
 
-const users = [ // TODO: Hook up to store and retrieve active sessions
-    { email: 'someone@example.com', password: 'secret', id: 1, name: 'Potato man' }
-]; 
+// const users = [ // TODO: Hook up to store and retrieve active sessions
+//     { email: 'someone@example.com', password: 'secret', id: 1, name: 'Potato man' }
+// ]; 
+
 const app = express();
-
-app.use(expressSession({ // TODO: Research more about config object
-    name: 'sid',
-    secret: 'doggo',
-    cookie: {
-        maxAge:  HOUR_MS,
-        sameSite: true,
-        secure: false, // TODO: Get environment from NODE_ENV/process.env and determine if secure or not
-    },
-    resave: false,
-    saveUninitialized: false
-}));
+app.use(sessionConfig.middleware);
 app.use(express.json());
+app.use('/users', userRoutes);
 
+
+sessionConfig.sync();
 
 // ROUTES ----------------------------------------------------------------
 
@@ -45,40 +35,17 @@ app.get('/info', (req, res) => { // TODO: debugging purposes, only trigger in de
     res.status(200).send({ session: req.session });
 })
 
-app.post('/login', hasRequiredParams('email', 'password') , (req, res) => { // TODO: Implement Redis/Postgres Store
-    const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
+// app.post('/login', hasRequiredParams('email', 'password') , (req, res) => { // TODO: Implement Redis/Postgres Store
+//     const { email, password } = req.body;
+//     const user = users.find(u => u.email === email && u.password === password);
 
-    if  (!user) {
-        return createErrResponse(res, 401, 'Invalid Credentials');
-    }
+//     if  (!user) {
+//         return createErrResponse(res, 401, 'Invalid Credentials');
+//     }
 
-    req.session.userId = user.id;
-    res.status(200).send(createSuccess('Login Successful'));
-});
-
-app.post('/register', hasRequiredParams('email', 'password', 'name'), (req, res) => { 
-
-    const { name, email, password } = req.body;
-
-    if (userExists(undefined, email)) {
-        return createErrResponse(res, 403, 'Email is unavailable');
-    }
-
-    // create user
-
-    const newUser = {
-        id: users.length + 1, // TODO: Generate proper IDs
-        name,
-        email,
-        password // TODO: Hash passwords and stuff
-    };
-
-    req.session.userId = newUser.id;
-    users.push(newUser);
-    return res.status(201).send(createSuccess('User successfully registered'));
-
-});
+//     req.session.userId = user.id;
+//     res.status(200).send(createSuccess('Login Successful'));
+// });
 
 app.get('/user', isLoggedIn, (req, res) => {
     const { userId } = req.session; // TODO: Check if person is in session, else return 401

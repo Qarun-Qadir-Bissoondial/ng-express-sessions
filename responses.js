@@ -5,9 +5,13 @@
  */
 
 module.exports = {
-    createErrResponse: (res, code, message) => {
+    createErrResponse: (res, code = 500, message = "Internal Server Error") => {
         res.status(code);
         return res.send({success: false, message});
     },
-    createSuccess: (data) => ({ success: true, data }),
+    createSuccessResponse: (res, message, code = 200, data) => {
+        res.status(code);
+        return res.send({ success: true, message, data })
+    },
+    createSuccess: (data, message) => ({ success: true, data, message }),
 }
